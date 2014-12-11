@@ -75,7 +75,8 @@ def get_pdf_contents(filename):
                         contents[i].append(TextItem(child))
             #add horizontal lines
             elif isinstance(child, LTLine) or isinstance(child, LTRect):
-                if abs(child.y0 - child.y1) < 2:
+                if (abs(child.y0 - child.y1) < 2 and 
+                    abs(child.x0 - child.x1) > 10):
                     hlines.append(child.y0)
         pages.append((contents, hlines))
     return pages
