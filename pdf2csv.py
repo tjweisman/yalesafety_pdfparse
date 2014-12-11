@@ -1,4 +1,3 @@
-#!/usr/bin/python
 import sys, re
 from itertools import *
 from pdfminer.pdfdocument import PDFDocument
@@ -7,7 +6,7 @@ from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.pdfdevice import PDFDevice
 from pdfminer.pdfpage import PDFPage
 from pdfminer.converter import TextConverter
-from pdfminer.layout import LAParams, LTTextBoxHorizontal, LTLine
+from pdfminer.layout import LAParams, LTTextBoxHorizontal, LTLine, LTRect
 from pdfminer.converter import PDFPageAggregator
 
 TEXT_HEIGHT=12.0
@@ -32,7 +31,9 @@ class TextItem:
         self.y0, self.y1 = textobj.y0, textobj.y1
     def __init__(self, pdfobj=None):
         if pdfobj:
-            self.build_pdf(pdfobj)        
+            self.build_pdf(pdfobj)
+    def __repr__(self):
+        return "TextItem(%s %.1f %.1f)"%(repr(self.text), self.y0, self.y1)
 
 def get_pdf_contents(filename):
     """
@@ -55,7 +56,7 @@ def get_pdf_contents(filename):
 
     pages = []
     #cols are hardcoded, based on inspecting coordinates of example documents
-    cols = [(12,85), (85, 233), (233, 305), (305, 382), 
+    cols = [(12, 85), (85, 233), (233, 305), (305, 382), 
             (382, 558), (558, 661), (661, 779)]
     hlines = []
 
@@ -73,8 +74,8 @@ def get_pdf_contents(filename):
                     if child.x0 >= col[0] and child.x1 <= col[1]:
                         contents[i].append(TextItem(child))
             #add horizontal lines
-            elif isinstance(child, LTLine):
-                if abs(child.y0 - child.y1) < 1:
+            elif isinstance(child, LTLine) or isinstance(child, LTRect):
+                if abs(child.y0 - child.y1) < 2:
                     hlines.append(child.y0)
         pages.append((contents, hlines))
     return pages
@@ -94,6 +95,12 @@ def split_item(item, hlines):
             it1.y0 = line + 1
             it2.y1 = line - 1
             it2.text = ' '.join(arr[split_index:])
+            if it1.text == "" or it2.text == "":
+                if it1.text == "":
+                    item.y1 = line - 1
+                else:
+                    item.y0 = line + 1
+                return [item]
             return [it1, it2]
     return [item]
     
@@ -165,10 +172,16 @@ def get_csv_text(filename):
         hlines.sort()
         #data is organized by columns. use hlines to ensure each item
         #in a column is data for exactly one case
-        data = [process_column(col, hlines)[1:] for col in contents]
+        data = [process_column(col, hlines) for col in contents]
+
+        #sometimes, we're missing the header in the first column since it
+        #gets absorbed by the Chief Ronnell Higgins text box
+        if re.match(r'\d\d?/\d\d?/\d\d\d\d', data[0][0]):
+            data[0].insert(0,"Date reported")
+            
+        #delete all headers
+        data = [col[1:] for col in data]
         cases = get_cases(data)
         for case in cases:
             out_cases.append(", ".join(case))
     return "\n".join(out_cases)
-
-print get_csv_text("example.pdf")
