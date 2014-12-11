@@ -156,6 +156,7 @@ def get_cases(data):
         case[2] = re.sub(' *through.*', '', case[2])
     return cases
 
+
 def get_csv_text(filename):
     """get csv data from a pdf file
 
@@ -166,14 +167,15 @@ def get_csv_text(filename):
     the event start time)
     """
     out_cases = []
-    for page in get_pdf_contents(filename):
+    pages = get_pdf_contents(filename)
+    for page in pages:
         #get pdf text objects and horizontal line coords
         contents, hlines = page
         hlines.sort()
         #data is organized by columns. use hlines to ensure each item
         #in a column is data for exactly one case
         data = [process_column(col, hlines) for col in contents]
-
+        
         #sometimes, we're missing the header in the first column since it
         #gets absorbed by the Chief Ronnell Higgins text box
         if re.match(r'\d\d?/\d\d?/\d\d\d\d', data[0][0]):
