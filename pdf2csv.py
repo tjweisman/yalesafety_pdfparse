@@ -56,7 +56,7 @@ def get_pdf_contents(filename):
 
     pages = []
     #cols are hardcoded, based on inspecting coordinates of example documents
-    cols = [(12, 85), (85, 233), (233, 305), (305, 382), 
+    cols = [(12, 85), (85, 234), (233, 305), (305, 382), 
             (382, 558), (558, 661), (661, 779)]
     hlines = []
 
@@ -105,7 +105,6 @@ def split_item(item, hlines):
             return [it1, it2]
     return [item]
     
-
 def collect_item(prev_items, next_item, hlines):
     """collect the next item into a list of lists"""
     #if item is in same row as previous, add it to the last list
