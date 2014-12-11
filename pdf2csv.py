@@ -133,7 +133,9 @@ def same_item(item1, item2, hlines):
 def collapse_item(item_list):
     """collapse a list of items all in the same row to a single string"""
     item_str = reduce(lambda x, y: x + y.text, item_list, "")
-    return re.sub(' +', ' ', item_str.replace('\n', ' ')).strip()
+    subst = re.sub(' +', ' ', item_str.replace('\n', ' '))
+    #also strip commas
+    return subst.replace(',','').strip()
 
 def process_column(col, hlines):
     """turn list of pdf objects in a column into meaningful data
@@ -191,10 +193,6 @@ def get_csv_text(filename):
         #also sometimes dates get stuck in the location column
         if re.match(r'.*\d\d?/\d\d?/\d\d\d\d.*', data[4][0]):
             data[4].pop(0)
-
-        #cols 1, 4, 5 get enclosing quotes
-        for index in [1,4,5]:
-            data[index] = ["'%s'"%item for item in data[index]]
             
         #delete all headers
         data = [col[1:] for col in data]
