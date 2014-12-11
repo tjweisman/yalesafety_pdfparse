@@ -56,8 +56,8 @@ def get_pdf_contents(filename):
 
     pages = []
     #cols are hardcoded, based on inspecting coordinates of example documents
-    cols = [(12, 85), (85, 234), (233, 305), (305, 382), 
-            (382, 558), (558, 661), (661, 779)]
+    cols = [(12, 85), (83, 235), (233, 305), (305, 382), 
+            (382, 558), (558, 661), (661, 760)]
     hlines = []
 
     for page in PDFPage.create_pages(document):
@@ -87,7 +87,8 @@ def split_item(item, hlines):
         if line >= item.y0 and line <= item.y1:
             arr = item.text.splitlines()
             #guess which newline to split at by estimating the height of text
-            split_index = int(round((item.y1 - line)/TEXT_HEIGHT))
+            #TRUNCATE rather than rounding, since we'll only ever overestimate
+            split_index = int((item.y1 - line)/TEXT_HEIGHT)
             it1 = TextItem()
             it2 = TextItem()
             it1.build_textitem(item)
@@ -145,6 +146,8 @@ def process_column(col, hlines):
     col = [it for split in col for it in split]
     col = reduce(lambda x,y: collect_item(x,y, hlines), col, [])
     col = [collapse_item(item) for item in col]
+    if "" in col:
+        col.remove("")
     return col
 
 def get_cases(data):
@@ -180,6 +183,18 @@ def get_csv_text(filename):
         #gets absorbed by the Chief Ronnell Higgins text box
         if re.match(r'\d\d?/\d\d?/\d\d\d\d', data[0][0]):
             data[0].insert(0,"Date reported")
+
+        #sometimes, the "Chief of Police" string gets added instead
+        if re.match(r'.*Chief +of +Police.*', data[0][0]):
+            data[0].pop(0)
+
+        #also sometimes dates get stuck in the location column
+        if re.match(r'.*\d\d?/\d\d?/\d\d\d\d.*', data[4][0]):
+            data[4].pop(0)
+
+        #cols 1, 4, 5 get enclosing quotes
+        for index in [1,4,5]:
+            data[index] = ["'%s'"%item for item in data[index]]
             
         #delete all headers
         data = [col[1:] for col in data]

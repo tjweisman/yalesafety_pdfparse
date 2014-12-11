@@ -11,6 +11,10 @@ URL_BASE = "http://publicsafety.yale.edu/sites/default/files/%s.pdf"
 BAD_DATES = set([date(2014, 4, 23)])
 
 def get_csv(date):
+    wday = date.weekday()
+    #no crime reports on weekends
+    if wday == 5 or wday == 6:
+        return ""
     """get csv data for cases on a particular date"""
     url = URL_BASE%date.strftime("%m%d%y")
     
@@ -39,6 +43,6 @@ def get_csv_range(start_date, end_date, out_filename):
             fp.write(get_csv(date))
         date += day
 
-#write a csv file for all cases in October 2014
-get_csv_range(date(2014, 1, 1), 
-              date(2014, 12, 9), "crime2014.csv")
+#write a csv file for all available cases
+get_csv_range(date(2013, 1, 1), 
+              date(2014, 12, 10), "all.csv")
